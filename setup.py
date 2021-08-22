@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 import sys
 
 print('Please install OpenAI Baselines (commit 8e56dd) and requirement.txt')
-if not (sys.version.startswith('3.5') or sys.version.startswith('3.6')):
-    raise Exception('Only Python 3.5 and 3.6 are supported')
+#if not (sys.version.startswith('3.5') or sys.version.startswith('3.6')):
+#    raise Exception('Only Python 3.5 and 3.6 are supported')
 
 setup(name='deep_rl',
       packages=[package for package in find_packages()
