@@ -8,7 +8,7 @@ def ppo_continuous(**kwargs):
     kwargs.setdefault('log_level', 0)
     kwargs.setdefault('gate', nn.Tanh())
     kwargs.setdefault('tasks', False)
-    kwargs.setdefault('max_steps', 1e7)
+    kwargs.setdefault('max_steps', 3e7)
     config = Config()
     config.merge(kwargs)
 
@@ -52,7 +52,7 @@ def a_squared_c_ppo_continuous(**kwargs):
     kwargs.setdefault('opt_ep', 5)
     kwargs.setdefault('entropy_weight', 0.01)
     kwargs.setdefault('tasks', False)
-    kwargs.setdefault('max_steps', 1e7)
+    kwargs.setdefault('max_steps', 3e7)
     kwargs.setdefault('beta_weight', 0)
     config = Config()
     config.merge(kwargs)
@@ -60,10 +60,11 @@ def a_squared_c_ppo_continuous(**kwargs):
     # if config.tasks:
     #     set_tasks(config)
 
-    if 'dm-humanoid' in config.game:
-        hidden_units = (128, 128)
-    else:
-        hidden_units = (64, 64)
+    # if 'dm-humanoid' in config.game:
+    #     hidden_units = (128, 128)
+    # else:
+    #     hidden_units = (64, 64)
+    hidden_units = (256, 256)
 
     config.task_fn = lambda: Task(config.game)
     config.eval_env = config.task_fn()
@@ -98,7 +99,7 @@ def oc_continuous(**kwargs):
     kwargs.setdefault('gate', nn.Tanh())
     kwargs.setdefault('entropy_weight', 0.01)
     kwargs.setdefault('tasks', False)
-    kwargs.setdefault('max_steps', 1e7)
+    kwargs.setdefault('max_steps', 3e7)
     kwargs.setdefault('num_workers', 16)
     config = Config()
     config.merge(kwargs)
@@ -140,7 +141,7 @@ def ppoc_continuous(**kwargs):
     kwargs.setdefault('gate', nn.Tanh())
     kwargs.setdefault('entropy_weight', 0.01)
     kwargs.setdefault('tasks', False)
-    kwargs.setdefault('max_steps', 1e7)
+    kwargs.setdefault('max_steps', 3e7)
     config = Config()
     config.merge(kwargs)
 
@@ -184,18 +185,19 @@ if __name__ == '__main__':
     set_one_thread()
     select_device(-1)
 
-    game = 'HalfCheetah-v2' # 'Walker2d-v2' 'Swimmer-v2'
-    # game = 'Lift'
+    # game = 'HalfCheetah-v2' # 'Walker2d-v2' 'Swimmer-v2'
+    game = 'Lift'
 
-    postfix = 'try1'
+    # postfix = 'hs256'
+    postfix = 'test'
 
-    ppo_continuous(
-        game=game,
-        log_level=1,
-
-        eval_interval=2048*10,
-        tag='{}-ppo-{}'.format(game, postfix),
-    )
+    # ppo_continuous(
+    #     game=game,
+    #     log_level=1,
+    #
+    #     eval_interval=2048*10,
+    #     tag='{}-ppo-{}'.format(game, postfix),
+    # )
 
     a_squared_c_ppo_continuous(
         game=game,
@@ -209,18 +211,18 @@ if __name__ == '__main__':
         tag='{}-dac-{}'.format(game, postfix),
     )
 
-    oc_continuous(
-        game=game,
-        log_level=1,
-        num_o=4,
+    # oc_continuous(
+    #     game=game,
+    #     log_level=1,
+    #     num_o=4,
+    #
+    #     tag='{}-oc-{}'.format(game, postfix),
+    # )
 
-        tag='{}-oc-{}'.format(game, postfix),
-    )
-
-    ppoc_continuous(
-        game=game,
-        log_level=1,
-        num_o=4,
-
-        tag='{}-ppoc-{}'.format(game, postfix),
-    )
+    # ppoc_continuous(
+    #     game=game,
+    #     log_level=1,
+    #     num_o=4,
+    #
+    #     tag='{}-ppoc-{}'.format(game, postfix),
+    # )
