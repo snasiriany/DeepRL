@@ -83,3 +83,11 @@ class PPOAgent(BaseAgent):
                 (policy_loss + value_loss).backward()
                 nn.utils.clip_grad_norm_(self.network.parameters(), config.gradient_clip)
                 self.opt.step()
+
+    def eval_step(self, state):
+        self.config.state_normalizer.set_read_only()
+        state = self.config.state_normalizer(state)
+        prediction = self.network(state)
+        action = prediction['mean'] # should we use 'a' instead for stochastic eval?
+        self.config.state_normalizer.unset_read_only()
+        return to_np(action)

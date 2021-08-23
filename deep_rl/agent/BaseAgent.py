@@ -42,29 +42,41 @@ class BaseAgent:
             action = self.eval_step(state)
             state, reward, done, info = env.step(action)
             ret = info[0]['episodic_return']
+            success = info[0].get('success', False)
             if ret is not None:
                 break
-        return ret
+        return ret, success
 
     def eval_episodes(self):
         episodic_returns = []
+        episodic_successes = []
         for ep in range(self.config.eval_episodes):
-            total_rewards = self.eval_episode()
+            total_rewards, success = self.eval_episode()
             episodic_returns.append(np.sum(total_rewards))
+            episodic_successes.append(np.sum(success))
         self.logger.info('steps %d, episodic_return_test %.2f(%.2f)' % (
             self.total_steps, np.mean(episodic_returns), np.std(episodic_returns) / np.sqrt(len(episodic_returns))
         ))
+        self.logger.info('steps %d, episodic_success_test %.2f(%.2f)' % (
+            self.total_steps, np.mean(episodic_successes), np.std(episodic_successes) / np.sqrt(len(episodic_successes))
+        ))
         self.logger.add_scalar('episodic_return_test', np.mean(episodic_returns), self.total_steps)
+        self.logger.add_scalar('episodic_success_test', np.mean(episodic_successes), self.total_steps)
         return {
             'episodic_return_test': np.mean(episodic_returns),
+            'episodic_success_test': np.mean(episodic_successes),
         }
 
     def record_online_return(self, info, offset=0):
         if isinstance(info, dict):
             ret = info['episodic_return']
+            success = info.get('success', False)
             if ret is not None:
                 self.logger.add_scalar('episodic_return_train', ret, self.total_steps + offset)
                 self.logger.info('steps %d, episodic_return_train %s' % (self.total_steps + offset, ret))
+
+                self.logger.add_scalar('episodic_success_train', success, self.total_steps + offset)
+                self.logger.info('steps %d, episodic_success_train %s' % (self.total_steps + offset, success))
         elif isinstance(info, tuple):
             for i, info_ in enumerate(info):
                 self.record_online_return(info_, i)

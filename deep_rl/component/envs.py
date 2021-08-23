@@ -22,6 +22,121 @@ try:
 except ImportError:
     pass
 
+def make_robosuite_env():
+    import robosuite as suite
+    from robosuite.wrappers.gym_wrapper import GymWrapper
+    from robosuite import load_controller_config
+
+    # env_variant = variant['env_variant']
+    env_variant=dict(
+        env_type='Lift',
+
+        robot_keys=['robot0_eef_pos', 'robot0_eef_quat', 'robot0_gripper_qpos', 'robot0_gripper_qvel'],
+        obj_keys=['object-state'],
+        controller_type='OSC_POSITION_YAW',
+        controller_config_update=dict(
+            position_limits=[
+                [-0.30, -0.30, 0.75],
+                [0.15, 0.30, 1.15]
+            ],
+        ),
+        env_kwargs=dict(
+            ignore_done=False, #True
+            horizon=150,
+
+            reward_shaping=True,
+            hard_reset=False,
+            control_freq=10,
+            camera_heights=512,
+            camera_widths=512,
+            table_offset=[-0.075, 0, 0.8],
+            reward_scale=5.0,
+
+            skill_config=dict(
+                skills=['ll'], # only using low level actions
+
+                aff_penalty_type='add',
+                aff_penalty_fac=15.0, # 5.0
+
+                task_sketch_ids=None,
+                max_skill_repeats=1,
+                terminate_on_sketch=True,
+                aff_th_for_sketch=0.90,
+
+                base_config=dict(
+                    global_xyz_bounds=[
+                        [-0.30, -0.30, 0.80],
+                        [0.15, 0.30, 0.95]
+                    ],
+                    lift_height=0.95,
+                    binary_gripper=True,
+
+                    aff_threshold=0.06,
+                    aff_type='dense',
+                    reach_global=True,
+                    aff_tanh_scaling=10.0,
+                ),
+                ll_config=dict(
+                    use_ori_params=True,
+                ),
+                reach_config=dict(
+                    use_gripper_params=False,
+                    local_xyz_scale=[0.0, 0.0, 0.06],
+                    use_ori_params=False,
+                    max_ac_calls=15,
+                ),
+                grasp_config=dict(
+                    global_xyz_bounds=[
+                        [-0.30, -0.30, 0.80],
+                        [0.15, 0.30, 0.85]
+                    ],
+                    aff_threshold=0.03,
+
+                    local_xyz_scale=[0.0, 0.0, 0.0],
+                    use_ori_params=True,
+                    max_ac_calls=20,
+                    num_reach_steps=2,
+                    num_grasp_steps=3,
+                ),
+                push_config=dict(
+                    global_xyz_bounds=[
+                        [-0.30, -0.30, 0.80],
+                        [0.15, 0.30, 0.85]
+                    ],
+                    delta_xyz_scale=[0.25, 0.25, 0.05],
+
+                    max_ac_calls=20,
+                    use_ori_params=True,
+
+                    aff_threshold=[0.12, 0.12, 0.04],
+                ),
+            ),
+        ),
+    )
+
+    controller_config = load_controller_config(default_controller=env_variant['controller_type'])
+    controller_config_update = env_variant.get('controller_config_update', {})
+    controller_config.update(controller_config_update)
+
+    robot_type = env_variant.get('robot_type', 'Panda')
+
+    obs_keys = env_variant['robot_keys'] + env_variant['obj_keys']
+
+    env = suite.make(
+        env_name=env_variant['env_type'],  # "Lift" try with other tasks like "Stack" and "Door"
+        robots=robot_type,  # try with other robots like "Sawyer" and "Jaco"
+        has_renderer=False,
+        has_offscreen_renderer=True, #False,
+        use_camera_obs=False,
+        controller_configs=controller_config,
+
+        **env_variant['env_kwargs']
+    )
+
+    env = GymWrapper(env, keys=obs_keys)
+
+    return env
+
 
 # adapted from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr/blob/master/envs.py
 def make_env(env_id, seed, rank, episode_life=True):
@@ -31,6 +146,8 @@ def make_env(env_id, seed, rank, episode_life=True):
             import dm_control2gym
             _, domain, task = env_id.split('-')
             env = dm_control2gym.make(domain_name=domain, task_name=task)
+        elif env_id == 'Lift':
+            env = make_robosuite_env()
         else:
             env = gym.make(env_id)
         is_atari = hasattr(gym.envs, 'atari') and isinstance(
