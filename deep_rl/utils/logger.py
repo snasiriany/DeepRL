@@ -14,21 +14,35 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s: %(message)s'
 from .misc import *
 
 
-def get_logger(tag='default', log_level=0):
+def get_logger(env_name, tag='default', log_level=0):
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
+
+    import pathlib
+    import os.path as osp
+    base_logdir = pathlib.Path(__file__).parent.parent.parent.resolve()
+    exp_logdir = osp.join(base_logdir, 'data', env_name, '%s-%s' % (tag, get_time_str()))
+    for path in [
+        exp_logdir,
+        osp.join(exp_logdir, 'model'),
+        osp.join(exp_logdir, 'tf_log'),
+    ]:
+        if not os.path.exists(path):
+            os.makedirs(path)
+
     if tag is not None:
-        fh = logging.FileHandler('./log/%s-%s.txt' % (tag, get_time_str()))
+        fh = logging.FileHandler(osp.join(exp_logdir, 'log.txt'))
         fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s: %(message)s'))
         fh.setLevel(logging.INFO)
         logger.addHandler(fh)
-    return Logger(logger, './tf_log/logger-%s-%s' % (tag, get_time_str()), log_level)
+    return Logger(logger, exp_logdir, log_level)
 
 
 class Logger(object):
     def __init__(self, vanilla_logger, log_dir, log_level=0):
         self.log_level = log_level
-        self.writer = SummaryWriter(log_dir)
+        self.log_dir = log_dir
+        self.writer = SummaryWriter(log_dir + '/tf_log')
         if vanilla_logger is not None:
             self.info = vanilla_logger.info
             self.debug = vanilla_logger.debug

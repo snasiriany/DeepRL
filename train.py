@@ -197,6 +197,13 @@ if __name__ == '__main__':
     set_one_thread()
     select_device(args.gpu_id)
 
+    if args.env in ['lift', 'door', 'pnp']:
+        save_interval=2048*25
+    elif args.env in ['wipe']:
+        save_interval=2048*10
+    else:
+        save_interval=2048*50
+
 
     a_squared_c_ppo_continuous(
         game=args.env,
@@ -206,7 +213,7 @@ if __name__ == '__main__':
         opt_ep=5,
         freeze_v=False,
 
-        save_interval=2048*2, #50,
+        save_interval=save_interval,
         eval_interval=2048*10,
         eval_episodes=20,
         tag='{}-dac-{}'.format(args.env, args.label),
