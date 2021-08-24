@@ -22,97 +22,214 @@ try:
 except ImportError:
     pass
 
-def make_robosuite_env():
+def make_robosuite_env(env_id):
     import robosuite as suite
     from robosuite.wrappers.gym_wrapper import GymWrapper
     from robosuite import load_controller_config
 
-    # env_variant = variant['env_variant']
-    env_variant=dict(
-        env_type='Lift',
+    import rlkit.util.hyperparameter as hyp
 
-        robot_keys=['robot0_eef_pos', 'robot0_eef_quat', 'robot0_gripper_qpos', 'robot0_gripper_qvel'],
-        obj_keys=['object-state'],
-        controller_type='OSC_POSITION_YAW',
-        controller_config_update=dict(
-            position_limits=[
-                [-0.30, -0.30, 0.75],
-                [0.15, 0.30, 1.15]
-            ],
-        ),
-        env_kwargs=dict(
-            ignore_done=False, #True
-            horizon=150,
+    base_variant=dict(
+        env_variant=dict(
+            robot_keys=['robot0_eef_pos', 'robot0_eef_quat', 'robot0_gripper_qpos', 'robot0_gripper_qvel'],
+            obj_keys=['object-state'],
+            controller_type='OSC_POSITION_YAW',
+            controller_config_update=dict(
+                position_limits=[
+                    [-0.30, -0.30, 0.75],
+                    [0.15, 0.30, 1.15]
+                ],
+            ),
+            env_kwargs=dict(
+                ignore_done=False, #True
+                horizon=150,
 
-            reward_shaping=True,
-            hard_reset=False,
-            control_freq=10,
-            camera_heights=512,
-            camera_widths=512,
-            table_offset=[-0.075, 0, 0.8],
-            reward_scale=5.0,
+                reward_shaping=True,
+                hard_reset=False,
+                control_freq=10,
+                camera_heights=512,
+                camera_widths=512,
+                table_offset=[-0.075, 0, 0.8],
+                reward_scale=5.0,
 
-            skill_config=dict(
-                skills=['ll'], # only using low level actions
+                skill_config=dict(
+                    skills=['ll'], # only using low level actions
 
-                aff_penalty_type='add',
-                aff_penalty_fac=15.0, # 5.0
+                    aff_penalty_type='add',
+                    aff_penalty_fac=15.0, # 5.0
 
-                task_sketch_ids=None,
-                max_skill_repeats=1,
-                terminate_on_sketch=True,
-                aff_th_for_sketch=0.90,
+                    task_sketch_ids=None,
+                    max_skill_repeats=1,
+                    terminate_on_sketch=True,
+                    aff_th_for_sketch=0.90,
 
-                base_config=dict(
-                    global_xyz_bounds=[
-                        [-0.30, -0.30, 0.80],
-                        [0.15, 0.30, 0.95]
-                    ],
-                    lift_height=0.95,
-                    binary_gripper=True,
+                    base_config=dict(
+                        global_xyz_bounds=[
+                            [-0.30, -0.30, 0.80],
+                            [0.15, 0.30, 0.95]
+                        ],
+                        lift_height=0.95,
+                        binary_gripper=True,
 
-                    aff_threshold=0.06,
-                    aff_type='dense',
-                    reach_global=True,
-                    aff_tanh_scaling=10.0,
-                ),
-                ll_config=dict(
-                    use_ori_params=True,
-                ),
-                reach_config=dict(
-                    use_gripper_params=False,
-                    local_xyz_scale=[0.0, 0.0, 0.06],
-                    use_ori_params=False,
-                    max_ac_calls=15,
-                ),
-                grasp_config=dict(
-                    global_xyz_bounds=[
-                        [-0.30, -0.30, 0.80],
-                        [0.15, 0.30, 0.85]
-                    ],
-                    aff_threshold=0.03,
+                        aff_threshold=0.06,
+                        aff_type='dense',
+                        reach_global=True,
+                        aff_tanh_scaling=10.0,
+                    ),
+                    ll_config=dict(
+                        use_ori_params=True,
+                    ),
+                    reach_config=dict(
+                        use_gripper_params=False,
+                        local_xyz_scale=[0.0, 0.0, 0.06],
+                        use_ori_params=False,
+                        max_ac_calls=15,
+                    ),
+                    grasp_config=dict(
+                        global_xyz_bounds=[
+                            [-0.30, -0.30, 0.80],
+                            [0.15, 0.30, 0.85]
+                        ],
+                        aff_threshold=0.03,
 
-                    local_xyz_scale=[0.0, 0.0, 0.0],
-                    use_ori_params=True,
-                    max_ac_calls=20,
-                    num_reach_steps=2,
-                    num_grasp_steps=3,
-                ),
-                push_config=dict(
-                    global_xyz_bounds=[
-                        [-0.30, -0.30, 0.80],
-                        [0.15, 0.30, 0.85]
-                    ],
-                    delta_xyz_scale=[0.25, 0.25, 0.05],
+                        local_xyz_scale=[0.0, 0.0, 0.0],
+                        use_ori_params=True,
+                        max_ac_calls=20,
+                        num_reach_steps=2,
+                        num_grasp_steps=3,
+                    ),
+                    push_config=dict(
+                        global_xyz_bounds=[
+                            [-0.30, -0.30, 0.80],
+                            [0.15, 0.30, 0.85]
+                        ],
+                        delta_xyz_scale=[0.25, 0.25, 0.05],
 
-                    max_ac_calls=20,
-                    use_ori_params=True,
+                        max_ac_calls=20,
+                        use_ori_params=True,
 
-                    aff_threshold=[0.12, 0.12, 0.04],
+                        aff_threshold=[0.12, 0.12, 0.04],
+                    ),
                 ),
             ),
         ),
     )
+
+    env_params = dict(
+        stack={
+            'env_variant.env_type': ['Stack'],
+            'env_variant.env_kwargs.full_stacking_bonus': [2.0],
+        },
+        door={
+            'env_variant.env_type': ['Door'],
+            'env_variant.env_kwargs.use_latch': [True],
+            'env_variant.controller_type': ['OSC_POSITION'],
+            'env_variant.controller_config_update.position_limits': [[[-0.25, -0.25, 0.90], [0.05, 0.05, 1.20]]],
+            'env_variant.env_kwargs.skill_config.base_config.global_xyz_bounds': [[[-0.25, -0.25, 0.90], [0.05, 0.05, 1.20]]],
+            'env_variant.env_kwargs.skill_config.grasp_config.global_xyz_bounds': [[[-0.25, -0.25, 0.90], [0.05, 0.05, 1.20]]],
+            'env_variant.env_kwargs.skill_config.push_config.global_xyz_bounds': [[[-0.25, -0.25, 0.90], [0.05, 0.05, 1.20]]],
+            'env_variant.env_kwargs.skill_config.base_config.lift_height': [1.15],
+            'env_variant.env_kwargs.skill_config.grasp_config.aff_threshold': [0.06],
+        },
+        lift={
+            'env_variant.env_type': ['Lift'],
+        },
+        nut_round={
+            'env_variant.env_type': ['NutAssemblyRound'],
+            'env_variant.env_kwargs.skill_config.grasp_config.aff_threshold': [0.06],
+        },
+        pnp={
+            'env_variant.env_type': [
+                'PickPlaceCan',
+                # 'PickPlaceBread',
+                # 'PickPlaceCanBread',
+            ],
+            'env_variant.env_kwargs.bin1_pos': [[0.0, -0.25, 0.8]],
+            'env_variant.env_kwargs.bin2_pos': [[0.0, 0.28, 0.8]],
+            'env_variant.controller_config_update.position_limits': [[[-0.15, -0.50, 0.75], [0.15, 0.50, 1.15]]],
+            'env_variant.env_kwargs.skill_config.base_config.global_xyz_bounds': [[[-0.15, -0.50, 0.82], [0.15, 0.50, 1.02]]],
+            'env_variant.env_kwargs.skill_config.grasp_config.global_xyz_bounds': [[[-0.15, -0.50, 0.82], [0.15, 0.50, 0.88]]],
+            'env_variant.env_kwargs.skill_config.push_config.global_xyz_bounds': [[[-0.15, -0.50, 0.82], [0.15, 0.50, 0.88]]],
+            'env_variant.env_kwargs.skill_config.base_config.lift_height': [1.0],
+
+            'env_variant.env_kwargs.use_center_of_target_bins_for_lift_pos': [True],
+            'env_variant.env_kwargs.skill_config.reach_config.aff_threshold': [[0.15, 0.25, 0.06]],
+            'env_variant.env_kwargs.use_unsolved_objs_for_src_pos': [True],
+        },
+        wipe={
+            'env_variant.env_type': ['Wipe'],
+            'env_variant.obj_keys': [['robot0_contact-obs', 'object-state']],
+            'algorithm_kwargs.max_path_length': [300],
+            'env_variant.controller_type': ['OSC_POSITION'],
+            'env_variant.env_kwargs.table_offset': [[0.05, 0, 0.8]],
+            'env_variant.controller_config_update.position_limits': [[[-0.10, -0.30, 0.75], [0.20, 0.30, 1.00]]],
+            'env_variant.env_kwargs.skill_config.base_config.global_xyz_bounds': [[[-0.10, -0.30, 0.75], [0.20, 0.30, 1.00]]],
+            'env_variant.env_kwargs.skill_config.grasp_config.global_xyz_bounds': [[[-0.10, -0.30, 0.80], [0.20, 0.30, 0.85]]],
+            'env_variant.env_kwargs.skill_config.push_config.global_xyz_bounds': [[[-0.10, -0.30, 0.80], [0.20, 0.30, 0.85]]],
+            'env_variant.env_kwargs.task_config': [
+                dict(
+                    coverage_factor=0.60,
+                    num_markers=150,
+                    wipe_contact_reward=0.05,
+                    excess_force_penalty_mul=0.01, # 0.1
+                    distance_multiplier=0.05,
+                    distance_th_multiplier=5.0,
+                    task_complete_reward=1.5,
+                    early_terminations=False,
+                    success_th=1.00,
+                ),
+            ],
+            'env_variant.env_kwargs.skill_config.base_config.aff_threshold': [[0.15, 0.25, 0.03]],
+            'env_variant.env_kwargs.skill_config.reach_config.aff_threshold': [[0.15, 0.25, 0.03]],
+            'env_variant.env_kwargs.skill_config.grasp_config.aff_threshold': [[0.15, 0.25, 0.03]],
+            'env_variant.env_kwargs.skill_config.push_config.aff_threshold': [[0.15, 0.25, 0.03]],
+        },
+        peg_ins={
+            'env_variant.env_type': ['PegInHole'],
+            'env_variant.controller_config_update.position_limits': [[[-0.30, -0.30, 0.75], [0.15, 0.30, 1.00]]],
+
+            'env_variant.env_kwargs.task_config.limit_init_ori': [True],
+            'env_variant.env_kwargs.task_config.cos_weight': [1],
+            'env_variant.env_kwargs.task_config.d_weight': [1],
+            'env_variant.env_kwargs.task_config.t_weight': [5],
+            'env_variant.env_kwargs.task_config.scale_by_cos': [True],
+            'env_variant.env_kwargs.task_config.scale_by_d': [True],
+            'env_variant.env_kwargs.task_config.cos_tanh_mult': [3.0],
+            'env_variant.env_kwargs.task_config.d_tanh_mult': [15.0],
+            'env_variant.env_kwargs.task_config.t_tanh_mult': [7.5],
+
+            'env_variant.env_kwargs.task_config.lift_pos_offset': [0.30],
+            'env_variant.env_kwargs.skill_config.reach_config.aff_threshold': [0.06],
+        },
+        cleanup={
+            'env_variant.env_type': ['Cleanup'],
+            'env_variant.env_kwargs.task_config': [
+                dict(
+                    use_pnp_rew=True,
+                    use_push_rew=True,
+                    rew_type='sum',
+                    push_scale_fac=5.0,
+                    use_realistic_obj_sizes=True,
+                ),
+                # dict(
+                #     use_pnp_rew=True,
+                #     use_push_rew=True,
+                #     num_pnp_objs=2,
+                #     num_push_objs=1,
+                #     rew_type='sum',
+                #     push_scale_fac=5.0,
+                #     use_realistic_obj_sizes=True,
+                # ),
+            ],
+        },
+    )
+
+    sweeper = hyp.DeterministicHyperparameterSweeper(
+        env_params[env_id], default_parameters=base_variant,
+    )
+    hp_list = sweeper.iterate_hyperparameters()
+    assert len(hp_list) == 1
+    env_variant = hp_list[0]['env_variant']
 
     controller_config = load_controller_config(default_controller=env_variant['controller_type'])
     controller_config_update = env_variant.get('controller_config_update', {})
@@ -146,8 +263,8 @@ def make_env(env_id, seed, rank, episode_life=True):
             import dm_control2gym
             _, domain, task = env_id.split('-')
             env = dm_control2gym.make(domain_name=domain, task_name=task)
-        elif env_id == 'Lift':
-            env = make_robosuite_env()
+        elif env_id in ['lift', 'door', 'stack', 'nut_round', 'pnp', 'wipe', 'peg_ins', 'cleanup']:
+            env = make_robosuite_env(env_id)
         else:
             env = gym.make(env_id)
         is_atari = hasattr(gym.envs, 'atari') and isinstance(

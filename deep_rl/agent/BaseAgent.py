@@ -35,36 +35,53 @@ class BaseAgent:
     def eval_step(self, state):
         raise NotImplementedError
 
+    def eval_start(self):
+        pass
+
+    def eval_end(self):
+        pass
+
     def eval_episode(self):
         env = self.config.eval_env
         state = env.reset()
+        success_any = False
+        self.eval_start()
         while True:
             action = self.eval_step(state)
             state, reward, done, info = env.step(action)
             ret = info[0]['episodic_return']
             success = info[0].get('success', False)
+            success_any = success_any or success
             if ret is not None:
                 break
-        return ret, success
+        self.eval_end()
+        return ret, success, success_any
 
     def eval_episodes(self):
         episodic_returns = []
         episodic_successes = []
+        episodic_successes_any = []
         for ep in range(self.config.eval_episodes):
-            total_rewards, success = self.eval_episode()
+            total_rewards, success, success_any = self.eval_episode()
             episodic_returns.append(np.sum(total_rewards))
             episodic_successes.append(np.sum(success))
+            episodic_successes_any.append(np.sum(success_any))
         self.logger.info('steps %d, episodic_return_test %.2f(%.2f)' % (
             self.total_steps, np.mean(episodic_returns), np.std(episodic_returns) / np.sqrt(len(episodic_returns))
         ))
         self.logger.info('steps %d, episodic_success_test %.2f(%.2f)' % (
             self.total_steps, np.mean(episodic_successes), np.std(episodic_successes) / np.sqrt(len(episodic_successes))
         ))
+        self.logger.info('steps %d, episodic_success_any_test %.2f(%.2f)' % (
+            self.total_steps, np.mean(episodic_successes_any), np.std(episodic_successes_any) / np.sqrt(len(episodic_successes_any))
+        ))
         self.logger.add_scalar('episodic_return_test', np.mean(episodic_returns), self.total_steps)
         self.logger.add_scalar('episodic_success_test', np.mean(episodic_successes), self.total_steps)
+        self.logger.add_scalar('episodic_success_any_test', np.mean(episodic_successes_any), self.total_steps)
         return {
             'episodic_return_test': np.mean(episodic_returns),
             'episodic_success_test': np.mean(episodic_successes),
+            'episodic_success_any_test': np.mean(episodic_successes_any),
         }
 
     def record_online_return(self, info, offset=0):

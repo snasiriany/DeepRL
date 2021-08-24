@@ -1,5 +1,6 @@
 from deep_rl import *
 import subprocess
+import argparse
 
 
 # PPO
@@ -60,11 +61,10 @@ def a_squared_c_ppo_continuous(**kwargs):
     # if config.tasks:
     #     set_tasks(config)
 
-    # if 'dm-humanoid' in config.game:
-    #     hidden_units = (128, 128)
-    # else:
-    #     hidden_units = (64, 64)
-    hidden_units = (256, 256)
+    if 'dm-humanoid' in config.game:
+        hidden_units = (128, 128)
+    else:
+        hidden_units = (64, 64)
 
     config.task_fn = lambda: Task(config.game)
     config.eval_env = config.task_fn()
@@ -179,50 +179,59 @@ def ppoc_continuous(**kwargs):
 
 
 if __name__ == '__main__':
+    # noinspection PyTypeChecker
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--env', type=str, default='HalfCheetah-v2')
+    parser.add_argument('--label', type=str, default='test')
+    # parser.add_argument('--num_seeds', type=int, default=1)
+    # parser.add_argument('--no_video', action='store_true')
+    # parser.add_argument('--no_gpu', action='store_true')
+    parser.add_argument('--gpu_id', type=int, default=-1)
+    # parser.add_argument('--debug', action='store_true')
+
+    args = parser.parse_args()
+
     mkdir('log')
     mkdir('data')
     random_seed()
     set_one_thread()
-    select_device(-1)
+    select_device(args.gpu_id)
 
-    # game = 'HalfCheetah-v2' # 'Walker2d-v2' 'Swimmer-v2'
-    game = 'Lift'
-
-    # postfix = 'hs256'
-    postfix = 'test'
-
-    # ppo_continuous(
-    #     game=game,
-    #     log_level=1,
-    #
-    #     eval_interval=2048*10,
-    #     tag='{}-ppo-{}'.format(game, postfix),
-    # )
 
     a_squared_c_ppo_continuous(
-        game=game,
+        game=args.env,
         learning='all',
         log_level=1,
         num_o=4,
         opt_ep=5,
         freeze_v=False,
-        # save_interval=int(1e6 / 2048) * 2048,
 
-        tag='{}-dac-{}'.format(game, postfix),
+        save_interval=2048*2, #50,
+        eval_interval=2048*10,
+        eval_episodes=20,
+        tag='{}-dac-{}'.format(args.env, args.label),
     )
 
+    # ppo_continuous(
+    #     game=args.env,
+    #     log_level=1,
+    #
+    #     eval_interval=2048*3,
+    #     tag='{}-ppo-{}'.format(args.env, args.label),
+    # )
+
     # oc_continuous(
-    #     game=game,
+    #     game=args.env,
     #     log_level=1,
     #     num_o=4,
     #
-    #     tag='{}-oc-{}'.format(game, postfix),
+    #     tag='{}-oc-{}'.format(args.env, args.label),
     # )
 
     # ppoc_continuous(
-    #     game=game,
+    #     game=args.env,
     #     log_level=1,
     #     num_o=4,
     #
-    #     tag='{}-ppoc-{}'.format(game, postfix),
+    #     tag='{}-ppoc-{}'.format(args.env, args.label),
     # )

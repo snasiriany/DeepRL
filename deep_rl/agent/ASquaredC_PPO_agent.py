@@ -275,3 +275,32 @@ class ASquaredCPPOAgent(BaseAgent):
             else:
                 self.learn(storage, 'bar')
             self.count += 1
+
+
+    def eval_step(self, state):
+        self.config.state_normalizer.set_read_only()
+        state = self.config.state_normalizer(state)
+
+        prediction = self.network(state)
+        pi_hat = self.compute_pi_hat(prediction, self.prev_options, self.is_initial_states)
+        # dist = torch.distributions.Categorical(probs=pi_hat)
+        options = torch.argmax(pi_hat, dim=1)
+
+        mean = prediction['mean'][self.worker_index, options]
+        # std = prediction['std'][self.worker_index, options]
+        # dist = torch.distributions.Normal(mean, std)
+        actions = mean
+
+        self.is_initial_states = tensor(np.zeros((self.config.num_workers))).byte()
+        self.prev_options = options
+
+        self.config.state_normalizer.unset_read_only()
+        return to_np(actions)
+
+    def eval_start(self):
+        self.is_initial_states = tensor(np.ones((self.config.num_workers))).byte()
+        self.prev_options = tensor(np.zeros(self.config.num_workers)).long()
+
+    def eval_end(self):
+        self.is_initial_states = tensor(np.ones((self.config.num_workers))).byte()
+        self.prev_options = tensor(np.zeros(self.config.num_workers)).long()
