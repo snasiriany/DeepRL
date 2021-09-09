@@ -9,7 +9,11 @@ import copy
 base_options_dir = '/home/soroushn/research/options/data'
 base_dir = osp.join(base_options_dir)
 
-for env in ['lift', 'stack', 'pnp', 'nut_round', 'cleanup', 'wipe', 'peg_ins', 'door']:
+for env in [
+	'lift', 'stack', 'pnp', 'nut_round', 'cleanup', 'wipe', 'peg_ins', 'door',
+	'cleanup_twin', 'push_and_stack_twin', 'stack_twin', 'lift_twin',
+	'cleanup_twin_easy', 'push_and_stack_twin_easy',
+]:
 	base_dir = osp.join('/home/soroushn/research/options/data', env)
 
 	for exp_name in os.listdir(base_dir):

@@ -197,7 +197,7 @@ if __name__ == '__main__':
     set_one_thread()
     select_device(args.gpu_id)
 
-    if args.env in ['lift', 'door', 'pnp']:
+    if args.env in ['lift', 'door', 'pnp', 'lift_twin']:
         save_interval=2048*25
     elif args.env in ['wipe']:
         save_interval=2048*10

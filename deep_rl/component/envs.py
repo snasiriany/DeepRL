@@ -273,6 +273,61 @@ def make_robosuite_env(env_id):
 
             'env_variant.env_kwargs.stack_only': [True],
         },
+        lift_twin={
+            'env_variant.env_type': ['Lift'],
+
+            # digital twin settings
+            'env_variant.env_kwargs.obj_size': [[0.051, 0.02625, 0.0108]],
+            'env_variant.robot_keys': [['robot0_eef_pos', 'robot0_eef_quat', 'robot0_gripper_qpos']],
+            'env_variant.env_kwargs.limit_init_ori': [True],
+            'env_variant.env_kwargs.workspace_size': [[0.10, 0.10]],
+        },
+        cleanup_twin_easy={
+            'env_variant.env_type': ['Cleanup'],
+            'env_variant.env_kwargs.task_config': [
+                dict(
+                    use_pnp_rew=True,
+                    use_push_rew=True,
+                    rew_type='sum',
+                    push_scale_fac=5.0,
+                    use_realistic_obj_sizes=True,
+
+                    digital_twin=True,
+                ),
+            ],
+
+            # digital twin settings
+            'env_variant.robot_keys': [['robot0_eef_pos', 'robot0_eef_quat', 'robot0_gripper_qpos']],
+            'env_variant.env_kwargs.table_offset': [[-0.10, 0, 0.8]],
+            'env_variant.env_kwargs.table_full_size': [[0.6, 1.0, 0.05]],
+            'env_variant.controller_config_update.position_limits': [[[-0.26, -0.35, 0.75], [0.04, 0.35, 1.15]]],
+            'env_variant.env_kwargs.skill_config.base_config.global_xyz_bounds': [[[-0.26, -0.35, 0.80], [0.04, 0.35, 0.95]]],
+            'env_variant.env_kwargs.skill_config.grasp_config.global_xyz_bounds': [[[-0.26, -0.35, 0.80], [0.04, 0.35, 0.85]]],
+            'env_variant.env_kwargs.skill_config.push_config.global_xyz_bounds': [[[-0.26, -0.35, 0.80], [0.04, 0.35, 0.85]]],
+
+            # easy env settings
+            'env_variant.env_kwargs.skill_config.grasp_config.use_obj_yaw': [True],
+            'env_variant.env_kwargs.limit_init_ori': [True],
+        },
+        push_and_stack_twin_easy={
+            'env_variant.env_type': ['PushAndStack'],
+
+            # digital twin settings
+            'env_variant.robot_keys': [['robot0_eef_pos', 'robot0_eef_quat', 'robot0_gripper_qpos']],
+            'env_variant.env_kwargs.table_offset': [[-0.10, 0, 0.8]],
+            'env_variant.env_kwargs.table_full_size': [[0.6, 1.0, 0.05]],
+            'env_variant.controller_config_update.position_limits': [[[-0.26, -0.35, 0.75], [0.04, 0.35, 1.15]]],
+            'env_variant.env_kwargs.skill_config.base_config.global_xyz_bounds': [[[-0.26, -0.35, 0.80], [0.04, 0.35, 0.95]]],
+            'env_variant.env_kwargs.skill_config.grasp_config.global_xyz_bounds': [[[-0.26, -0.35, 0.80], [0.04, 0.35, 0.85]]],
+            'env_variant.env_kwargs.skill_config.push_config.global_xyz_bounds': [[[-0.26, -0.35, 0.80], [0.04, 0.35, 0.85]]],
+
+            'env_variant.env_kwargs.stack_only': [False],
+
+            # easy env settings
+            'env_variant.env_kwargs.skill_config.grasp_config.use_obj_yaw': [True],
+            'env_variant.env_kwargs.rew_type': ['sum'],
+            'env_variant.env_kwargs.limit_init_ori': [True],
+        },
     )
 
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -316,7 +371,8 @@ def make_env(env_id, seed, rank, episode_life=True):
             env = dm_control2gym.make(domain_name=domain, task_name=task)
         elif env_id in [
             'lift', 'door', 'stack', 'nut_round', 'pnp', 'wipe', 'peg_ins', 'cleanup',
-            'cleanup_twin', 'push_and_stack_twin', 'stack_twin',
+            'cleanup_twin', 'push_and_stack_twin', 'stack_twin', 'lift_twin',
+            'cleanup_twin_easy', 'push_and_stack_twin_easy',
         ]:
             env = make_robosuite_env(env_id)
         else:
