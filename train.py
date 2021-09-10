@@ -185,7 +185,7 @@ if __name__ == '__main__':
     parser.add_argument('--label', type=str, default='test')
     # parser.add_argument('--num_seeds', type=int, default=1)
     # parser.add_argument('--no_video', action='store_true')
-    # parser.add_argument('--no_gpu', action='store_true')
+    parser.add_argument('--no_gpu', action='store_true')
     parser.add_argument('--gpu_id', type=int, default=-1)
     # parser.add_argument('--debug', action='store_true')
 

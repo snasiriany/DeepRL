@@ -328,6 +328,18 @@ def make_robosuite_env(env_id):
             'env_variant.env_kwargs.rew_type': ['sum'],
             'env_variant.env_kwargs.limit_init_ori': [True],
         },
+        push={
+            'env_variant.env_type': ['Push'],
+
+            # digital twin settings
+            'env_variant.robot_keys': [['robot0_eef_pos', 'robot0_eef_quat', 'robot0_gripper_qpos']],
+            'env_variant.env_kwargs.table_offset': [[-0.10, 0, 0.8]],
+            'env_variant.env_kwargs.table_full_size': [[0.6, 1.0, 0.05]],
+            'env_variant.controller_config_update.position_limits': [[[-0.26, -0.35, 0.75], [0.04, 0.35, 1.15]]],
+            'env_variant.env_kwargs.skill_config.base_config.global_xyz_bounds': [[[-0.26, -0.35, 0.80], [0.04, 0.35, 0.95]]],
+            'env_variant.env_kwargs.skill_config.grasp_config.global_xyz_bounds': [[[-0.26, -0.35, 0.80], [0.04, 0.35, 0.85]]],
+            'env_variant.env_kwargs.skill_config.push_config.global_xyz_bounds': [[[-0.26, -0.35, 0.80], [0.04, 0.35, 0.85]]],
+        },
     )
 
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -372,7 +384,7 @@ def make_env(env_id, seed, rank, episode_life=True):
         elif env_id in [
             'lift', 'door', 'stack', 'nut_round', 'pnp', 'wipe', 'peg_ins', 'cleanup',
             'cleanup_twin', 'push_and_stack_twin', 'stack_twin', 'lift_twin',
-            'cleanup_twin_easy', 'push_and_stack_twin_easy',
+            'cleanup_twin_easy', 'push_and_stack_twin_easy', 'push',
         ]:
             env = make_robosuite_env(env_id)
         else:
