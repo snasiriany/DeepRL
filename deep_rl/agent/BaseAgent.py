@@ -41,28 +41,48 @@ class BaseAgent:
     def eval_end(self):
         pass
 
-    def eval_episode(self):
+    def eval_episode(self, image_obs_in_info=False):
         env = self.config.eval_env
         state = env.reset()
         success_any = False
         self.eval_start()
+
+        path_info = {
+            'options': [],
+            'actions': [],
+            'env_infos': [],
+        }
+
         while True:
             action = self.eval_step(state)
+
             state, reward, done, info = env.step(action)
+
+            if hasattr(self, 'prev_options'):
+                path_info['options'].append(to_np(self.prev_options))
+            path_info['actions'].append(action)
+
+            if image_obs_in_info:
+                img = env.env.envs[0].env._get_camera_obs()['agentview_image']
+                info[0]['image_obs'] = [img]
+
+            path_info['env_infos'].append(info[0])
+
             ret = info[0]['episodic_return']
             success = info[0].get('success', False)
             success_any = success_any or success
             if ret is not None:
                 break
         self.eval_end()
-        return ret, success, success_any
+
+        return ret, success, success_any, path_info
 
     def eval_episodes(self):
         episodic_returns = []
         episodic_successes = []
         episodic_successes_any = []
         for ep in range(self.config.eval_episodes):
-            total_rewards, success, success_any = self.eval_episode()
+            total_rewards, success, success_any, path_info = self.eval_episode()
             episodic_returns.append(np.sum(total_rewards))
             episodic_successes.append(np.sum(success))
             episodic_successes_any.append(np.sum(success_any))

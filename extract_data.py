@@ -12,7 +12,7 @@ base_dir = osp.join(base_options_dir)
 for env in [
 	'lift', 'stack', 'pnp', 'nut_round', 'cleanup', 'wipe', 'peg_ins', 'door',
 	'cleanup_twin', 'push_and_stack_twin', 'stack_twin', 'lift_twin',
-	'cleanup_twin_easy', 'push_and_stack_twin_easy',
+	'cleanup_twin_easy', 'push_and_stack_twin_easy', 'push',
 ]:
 	base_dir = osp.join('/home/soroushn/research/options/data', env)
 
